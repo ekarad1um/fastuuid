@@ -89,6 +89,7 @@ jobs:
         uses: actions/upload-artifact@v4
         with:
           name: wheel-${{ matrix.conf.target-triple }}
+          path: target/wheels/*
 
       # - name: Publish to PyPI
       #   if: github.event_name == 'push' && contains(github.ref, '.')
@@ -119,6 +120,7 @@ jobs:
         uses: actions/upload-artifact@v4
         with:
           name: sdist
+          path: target/wheels/*
       # - name: Publish to PyPI
       #   if: github.event_name == 'push' && contains(github.ref, '.')
       #   env:
