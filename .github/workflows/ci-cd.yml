@@ -37,19 +37,20 @@ jobs:
       matrix:
         python-version: ['3.8', '3.9', '3.10', '3.11', '3.12', '3.13', '3.14']
         conf:
-          - { os: ubuntu-latest, target: x86_64,  target-triple: x86_64-unknown-linux-gnu,             manylinux: auto, auditwheel: check }
-          - { os: ubuntu-latest, target: x86_64,  target-triple: x86_64-unknown-linux-musl,            manylinux: musllinux_1_1, auditwheel: repair }
-          - { os: ubuntu-latest, target: i686,    target-triple: i686-unknown-linux-gnu,               manylinux: auto, auditwheel: check }
-          - { os: ubuntu-latest, target: i686,    target-triple: i686-unknown-linux-musl,              manylinux: musllinux_1_1, auditwheel: repair }
-          - { os: ubuntu-latest, target: aarch64, target-triple: aarch64-unknown-linux-gnu,            manylinux: auto, auditwheel: check }
-          - { os: ubuntu-latest, target: aarch64, target-triple: aarch64-unknown-linux-musl,           manylinux: musllinux_1_1, auditwheel: repair }
+          # - { os: ubuntu-latest, target: x86_64,  target-triple: x86_64-unknown-linux-gnu,             manylinux: auto, auditwheel: check }
+          # - { os: ubuntu-latest, target: x86_64,  target-triple: x86_64-unknown-linux-musl,            manylinux: musllinux_1_1, auditwheel: repair }
+          # - { os: ubuntu-latest, target: i686,    target-triple: i686-unknown-linux-gnu,               manylinux: auto, auditwheel: check }
+          # - { os: ubuntu-latest, target: i686,    target-triple: i686-unknown-linux-musl,              manylinux: musllinux_1_1, auditwheel: repair }
+          - { os: ubuntu-latest, target: armv7,   target-triple: armv7-unknown-linux-gnueabihf,        manylinux: auto, auditwheel: check }
+          # - { os: ubuntu-latest, target: aarch64, target-triple: aarch64-unknown-linux-gnu,            manylinux: auto, auditwheel: check }
+          # - { os: ubuntu-latest, target: aarch64, target-triple: aarch64-unknown-linux-musl,           manylinux: musllinux_1_1, auditwheel: repair }
 
-          - { os: macos-13, target: x86_64,     target-triple: x86_64-apple-darwin, auditwheel: check }
-          - { os: macos-13, target: aarch64,    target-triple: aarch64-apple-darwin, auditwheel: check }
-          - { os: macos-13, target: universal2, target-triple: x86_64-apple-darwin, auditwheel: check }
+          # - { os: macos-13, target: x86_64,     target-triple: x86_64-apple-darwin, auditwheel: check }
+          # - { os: macos-13, target: aarch64,    target-triple: aarch64-apple-darwin, auditwheel: check }
+          # - { os: macos-13, target: universal2, target-triple: x86_64-apple-darwin, auditwheel: check }
 
-          - { os: windows-latest, target: x86_64, target-triple: x86_64-pc-windows-msvc, python-architecture: x64, auditwheel: check }
-          - { os: windows-latest, target: i686,   target-triple: i686-pc-windows-msvc,   python-architecture: x86, auditwheel: check }
+          # - { os: windows-latest, target: x86_64, target-triple: x86_64-pc-windows-msvc, python-architecture: x64, auditwheel: check }
+          # - { os: windows-latest, target: i686,   target-triple: i686-pc-windows-msvc,   python-architecture: x86, auditwheel: check }
     steps:
       - uses: actions/checkout@v5
       - uses: actions/setup-python@v6
@@ -77,7 +78,7 @@ jobs:
               -c "pip install fastuuid --no-index --find-links /wheels && python -c 'import fastuuid'"
       - name: Install built wheel and Test (Native)
         if: |
-          !startsWith(matrix.conf.manylinux, 'musl') && 
+          !startsWith(matrix.conf.manylinux, 'musl') &&
           !( matrix.python-version == 'pypy3.10' && runner.os == 'Windows' ) &&
           ( matrix.conf.target == 'x86_64' || matrix.conf.target == 'universal2' )
         run: |
@@ -85,15 +86,21 @@ jobs:
           # use first to get in dev dependencies
           python -m pip install fastuuid --find-links target/wheels --force-reinstall
           python -c "import fastuuid; print('Package imported successfully')"
-      - name: Publish to PyPI
-        if: github.event_name == 'push' && contains(github.ref, '.')
-        env:
-          TWINE_USERNAME: __token__
-          TWINE_PASSWORD: ${{ secrets.PYPI_API_TOKEN }}
-        run: |
-          python -m pip install --upgrade pip
-          pip install twine
-          twine upload target/wheels/*
+      - name: Upload artifacts
+        uses: actions/upload-artifact@v3
+        with:
+          name: wheel-${{ matrix.conf.target-triple }}
+
+      # - name: Publish to PyPI
+      #   if: github.event_name == 'push' && contains(github.ref, '.')
+      #   env:
+      #     TWINE_USERNAME: __token__
+      #     TWINE_PASSWORD: ${{ secrets.PYPI_API_TOKEN }}
+      #   run: |
+      #     python -m pip install --upgrade pip
+      #     pip install twine
+      #     twine upload target/wheels/*
+
   build-sdist:
     needs: test
     runs-on: ubuntu-latest
@@ -109,12 +116,16 @@ jobs:
           args: sdist
       - name: Display structure of built files
         run: ls -R target/wheels
-      - name: Publish to PyPI
-        if: github.event_name == 'push' && contains(github.ref, '.')
-        env:
-          TWINE_USERNAME: __token__
-          TWINE_PASSWORD: ${{ secrets.PYPI_API_TOKEN }}
-        run: |
-          python -m pip install --upgrade pip
-          pip install twine
-          twine upload target/wheels/*
+      - name: Upload artifacts
+        uses: actions/upload-artifact@v3
+        with:
+          name: sdist
+      # - name: Publish to PyPI
+      #   if: github.event_name == 'push' && contains(github.ref, '.')
+      #   env:
+      #     TWINE_USERNAME: __token__
+      #     TWINE_PASSWORD: ${{ secrets.PYPI_API_TOKEN }}
+      #   run: |
+      #     python -m pip install --upgrade pip
+      #     pip install twine
+      #     twine upload target/wheels/*
