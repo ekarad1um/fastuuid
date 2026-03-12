@@ -86,7 +86,7 @@ jobs:
           python -m pip install fastuuid --find-links target/wheels --force-reinstall
           python -c "import fastuuid; print('Package imported successfully')"
       - name: Upload artifacts
-        uses: actions/upload-artifact@v3
+        uses: actions/upload-artifact@v4
         with:
           name: wheel-${{ matrix.conf.target-triple }}
 
@@ -116,7 +116,7 @@ jobs:
       - name: Display structure of built files
         run: ls -R target/wheels
       - name: Upload artifacts
-        uses: actions/upload-artifact@v3
+        uses: actions/upload-artifact@v4
         with:
           name: sdist
       # - name: Publish to PyPI
